@@ -764,7 +764,7 @@ function Contact() {
                     subject: form.subject || "General Inquiry",
                     message: form.message,
                 },
-                process.env.REACT_APP_EMAILJS_PUBLIC_KEY     // ta Public Key
+                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
             );
             const subject = form.subject || "General inquiry";
             const company = form.company ? ` from ${form.company}` : "";
