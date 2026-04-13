@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { INFO, SKILLS, EXPERIENCES, PROJECTS, EDUCATION, LANGUAGES } from "./data";
+import emailjs from "@emailjs/browser";
 
 /* ─── Hook: Scroll Reveal ─────────────────────────────────── */
 function useReveal(threshold = 0.12) {
@@ -187,7 +188,8 @@ function Hero() {
         <div
           className="flex-shrink-0"
           style={{
-            opacity: loaded ? 1 : 0,
+              marginLeft: "60px",
+              opacity: loaded ? 1 : 0,
             transform: loaded ? "none" : "translateY(20px)",
             transition: "opacity 1s ease, transform 1s ease",
             animation: loaded ? "float 6s ease-in-out infinite" : "none",
@@ -266,16 +268,7 @@ function Hero() {
             >
               ⚡ Full Stack Dev
             </div>
-            <div
-              className="absolute hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
-              style={{
-                right: -95, bottom: 30,
-                background: "var(--card)", border: "1px solid var(--border)", color: "var(--accent3)",
-                whiteSpace: "nowrap", animation: "float 5s ease-in-out infinite 1s",
-              }}
-            >
-              🏅 Scrum Certified
-            </div>
+
           </div>
         </div>
 
@@ -756,22 +749,32 @@ function Contact() {
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.email || !form.message) return;
-    setStatus("loading");
-
-    // Simulate a short delay for UX feel
-    await new Promise((r) => setTimeout(r, 1200));
-
-    // Build a personalized auto-reply locally (no API key needed)
-    const subject = form.subject || "General inquiry";
-    const company = form.company ? ` from ${form.company}` : "";
-    const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours. Looking forward to connecting with you!\n\nBest regards,\nLoqman Makouri\nComputer Engineering Student · EHEI Oujda\n📧 loqmanmakouri66@gmail.com\n\n— Loqman's Portfolio`;
-
-    setAiReply(reply);
-    setStatus("success");
-  };
+    const submit = async (e) => {
+        e.preventDefault();
+        if (!form.name || !form.email || !form.message) return;
+        setStatus("loading");
+        try {
+            await emailjs.send(
+                process.env.REACT_APP_EMAILJS_SERVICE_ID,
+                process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+                {
+                    name:    form.name,
+                    email:   form.email,
+                    company: form.company || "N/A",
+                    subject: form.subject || "General Inquiry",
+                    message: form.message,
+                },
+                process.env.REACT_APP_EMAILJS_PUBLIC_KEY     // ta Public Key
+            );
+            const subject = form.subject || "General inquiry";
+            const company = form.company ? ` from ${form.company}` : "";
+            const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours.\n\nBest regards,\nLoqman Makouri\n📧 loqmanmakouri66@gmail.com`;
+            setAiReply(reply);
+            setStatus("success");
+        } catch {
+            setStatus("error");
+        }
+    };
 
   const contactItems = [
     { icon: "✉", label: "Email",    val: INFO.email,    href: `mailto:${INFO.email}` },
@@ -911,7 +914,7 @@ function Footer() {
       >
         <div className="flex items-center gap-3">
           <span className="font-display font-black" style={{ color: "var(--accent)" }}>LM.</span>
-          <span>© 2025 Loqman Makouri — Oujda, Morocco</span>
+          <span>© 2026 Loqman Makouri — Oujda, Morocco</span>
         </div>
         <div className="flex items-center gap-2">
           <span
