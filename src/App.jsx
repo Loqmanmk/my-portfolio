@@ -322,10 +322,10 @@ function Hero() {
             <a href={`mailto:${INFO.email}`} className="btn-glow">
               ✉ Get in Touch
             </a>
-            <a href={INFO.github} target="_blank" rel="noreferrer" className="btn-outline">
+            <a href="https://github.com/Loqmanmk" target="_blank" rel="noreferrer" className="btn-outline">
               ⌥ GitHub
             </a>
-            <a href={INFO.linkedin} target="_blank" rel="noreferrer" className="btn-outline">
+            <a href="https://linkedin.com/in/loqman-makouri-11871138b" target="_blank" rel="noreferrer" className="btn-outline">
               in LinkedIn
             </a>
             <button
@@ -817,8 +817,8 @@ function Contact() {
             <RevealCard className="glass-card p-5" delay={400}>
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--dim)" }}>Social profiles</p>
               <div className="flex gap-3">
-                <a href={INFO.github} target="_blank" rel="noreferrer" className="btn-outline text-xs py-2 px-4">⌥ GitHub</a>
-                <a href={INFO.linkedin} target="_blank" rel="noreferrer" className="btn-outline text-xs py-2 px-4">in LinkedIn</a>
+                <a href="https://github.com/Loqmanmk" target="_blank" rel="noreferrer" className="btn-outline text-xs py-2 px-4">⌥ GitHub</a>
+                <a href="https://linkedin.com/in/loqman-makouri-11871138b" target="_blank" rel="noreferrer" className="btn-outline text-xs py-2 px-4">in LinkedIn</a>
               </div>
             </RevealCard>
           </div>
