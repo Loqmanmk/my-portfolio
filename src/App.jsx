@@ -791,7 +791,7 @@ function Contact() {
     { icon: "✉", label: "Email",    val: INFO.email,    href: `mailto:${INFO.email}` },
     { icon: "📞", label: "Phone",   val: INFO.phone,    href: `tel:${INFO.phone.replace(/\s/g, "")}` },
     { icon: "📍", label: "Location",val: INFO.location, href: null },
-    { icon: "💼", label: "LinkedIn",val: "loqman-makouri", href: INFO.linkedin },
+    { icon: "💼", label: "LinkedIn",val: "loqman-makouri", href:"https://linkedin.com/in/loqman-makouri-11871138b" },
   ];
 
   return (
