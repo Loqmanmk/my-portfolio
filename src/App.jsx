@@ -2,6 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { INFO, SKILLS, EXPERIENCES, PROJECTS, EDUCATION, LANGUAGES } from "./data";
 import emailjs from "@emailjs/browser";
 
+import { db } from "./firebase";
+import {
+    collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    doc,
+    updateDoc,
+    increment,
+} from "firebase/firestore";
+
 /* ─── Hook: Scroll Reveal ─────────────────────────────────── */
 function useReveal(threshold = 0.12) {
   const ref = useRef(null);
@@ -569,176 +581,256 @@ function Education() {
 }
 
 /* ─── COMMUNITY ───────────────────────────────────────────── */
+
 function Community() {
-  const [liked, setLiked] = useState(() => localStorage.getItem("lm_liked") === "true");
-  const [likes, setLikes] = useState(() => parseInt(localStorage.getItem("lm_likes") || "47", 10));
-  const [comments, setComments] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("lm_comments") || "[]"); }
-    catch { return []; }
-  });
-  const [name, setName] = useState("");
-  const [msg, setMsg] = useState("");
-  const [emoji, setEmoji] = useState("👋");
-  const [sending, setSending] = useState(false);
-  const [done, setDone] = useState(false);
+    const [liked, setLiked] = useState(false);
+    const [likes, setLikes] = useState(0);
 
-  const emojis = ["👋", "🔥", "💯", "🚀", "⭐", "🎯", "💡", "🤝", "😍", "🙌"];
+    const [comments, setComments] = useState([]);
 
-  const toggleLike = () => {
-    const next = !liked;
-    const count = next ? likes + 1 : likes - 1;
-    setLiked(next);
-    setLikes(count);
-    localStorage.setItem("lm_liked", String(next));
-    localStorage.setItem("lm_likes", String(count));
-  };
+    const [name, setName] = useState("");
+    const [msg, setMsg] = useState("");
+    const [emoji, setEmoji] = useState("👋");
+    const [sending, setSending] = useState(false);
+    const [done, setDone] = useState(false);
 
-  const submitComment = async (e) => {
-    e.preventDefault();
-    if (!name.trim() || !msg.trim()) return;
-    setSending(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const newC = {
-      id: Date.now(),
-      name: name.trim(),
-      msg: msg.trim(),
-      emoji,
-      date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+    const emojis = ["👋", "🔥", "💯", "🚀", "⭐", "🎯", "💡", "🤝", "😍", "🙌"];
+
+    /* ─── LOAD COMMENTS (REALTIME) ───────────────────── */
+    useEffect(() => {
+        const q = query(
+            collection(db, "comments"),
+            orderBy("createdAt", "desc")
+        );
+
+        const unsub = onSnapshot(q, (snapshot) => {
+            setComments(
+                snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }))
+            );
+        });
+
+        return () => unsub();
+    }, []);
+
+    /* ─── LOAD LIKES ──────────────────────────────────── */
+    useEffect(() => {
+        const ref = doc(db, "stats", "likes");
+
+        const unsub = onSnapshot(ref, (snap) => {
+            if (snap.exists()) {
+                setLikes(snap.data().count || 0);
+            }
+        });
+
+        return () => unsub();
+    }, []);
+
+    /* ─── LIKE BUTTON ─────────────────────────────────── */
+    const toggleLike = async () => {
+        const newLiked = !liked;
+        setLiked(newLiked);
+
+        const ref = doc(db, "stats", "likes");
+
+        await updateDoc(ref, {
+            count: increment(newLiked ? 1 : -1),
+        });
     };
-    const updated = [newC, ...comments].slice(0, 50);
-    setComments(updated);
-    localStorage.setItem("lm_comments", JSON.stringify(updated));
-    setName(""); setMsg(""); setEmoji("👋");
-    setSending(false); setDone(true);
-    setTimeout(() => setDone(false), 3000);
-  };
 
-  return (
-    <section id="community" className="relative">
-      <div className="orb" style={{ width: 400, height: 400, background: "radial-gradient(circle,rgba(139,92,246,0.09),transparent)", left: "50%", top: "0" }} />
-      <div className="section-wrap">
-        <SectionLabel
-          label="Visitor space"
-          title="Community"
-          accent="Wall"
-          sub="Like this portfolio, drop a comment, or just say hi — your message stays for future visitors."
-        />
+    /* ─── SUBMIT COMMENT ──────────────────────────────── */
+    const submitComment = async (e) => {
+        e.preventDefault();
+        if (!name.trim() || !msg.trim()) return;
 
-        {/* Like block */}
-        <RevealCard className="glass-card p-8 mb-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="font-bold text-xl mb-1" style={{ color: "var(--text)" }}>Enjoyed this portfolio?</h3>
-            <p className="text-sm" style={{ color: "var(--muted)" }}>Show some love with a like — it really means a lot 🙏</p>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <div className="text-4xl font-black" style={{ color: "var(--accent)" }}>{likes}</div>
-              <div className="text-xs mt-1" style={{ color: "var(--dim)" }}>likes</div>
-            </div>
-            <button
-              onClick={toggleLike}
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl transition-all duration-300 active:scale-90"
-              style={{
-                background: liked ? "linear-gradient(135deg,#8b5cf6,#ec4899)" : "var(--surface)",
-                border: `2px solid ${liked ? "transparent" : "var(--border)"}`,
-                boxShadow: liked ? "0 8px 30px rgba(139,92,246,0.45)" : "none",
-                transform: liked ? "scale(1.08)" : "scale(1)",
-              }}
-            >
-              {liked ? "❤️" : "🤍"}
-            </button>
-          </div>
-        </RevealCard>
+        setSending(true);
 
-        {/* Comments grid */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Form */}
-          <RevealCard>
-            <h3 className="font-bold text-lg mb-5" style={{ color: "var(--text)" }}>Leave a message</h3>
-            <form onSubmit={submitComment} className="flex flex-col gap-4">
-              <input
-                className="field"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={40}
-              />
-              <textarea
-                className="field"
-                placeholder="Your message…"
-                rows={4}
-                value={msg}
-                onChange={(e) => setMsg(e.target.value)}
-                maxLength={300}
-                style={{ resize: "none" }}
-              />
-              <div>
-                <p className="text-xs mb-2" style={{ color: "var(--dim)" }}>Pick an emoji reaction</p>
-                <div className="flex flex-wrap gap-2">
-                  {emojis.map((em) => (
-                    <button
-                      type="button"
-                      key={em}
-                      onClick={() => setEmoji(em)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all duration-200"
-                      style={{
-                        background: emoji === em ? "rgba(139,92,246,0.2)" : "var(--surface)",
-                        border: `1px solid ${emoji === em ? "var(--accent)" : "var(--border)"}`,
-                        transform: emoji === em ? "scale(1.18)" : "scale(1)",
-                      }}
-                    >
-                      {em}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="btn-glow justify-center"
-                disabled={sending || !name.trim() || !msg.trim()}
-              >
-                {sending ? "Posting…" : done ? "✓ Posted!" : "Post message →"}
-              </button>
-            </form>
-          </RevealCard>
+        await addDoc(collection(db, "comments"), {
+            name: name.trim(),
+            msg: msg.trim(),
+            emoji,
+            date: new Date().toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            }),
+            createdAt: new Date(),
+        });
 
-          {/* Comments list */}
-          <RevealCard delay={100}>
-            <h3 className="font-bold text-lg mb-5" style={{ color: "var(--text)" }}>
-              Messages{" "}
-              <span className="text-sm font-normal ml-1" style={{ color: "var(--dim)" }}>({comments.length})</span>
-            </h3>
-            {comments.length === 0 ? (
-              <div className="glass-card p-8 text-center" style={{ color: "var(--dim)" }}>
-                <div className="text-4xl mb-3">💬</div>
-                <p className="text-sm">Be the first to leave a message!</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 overflow-y-auto pr-1" style={{ maxHeight: 380 }}>
-                {comments.map((c) => (
-                  <div key={c.id} className="glass-card p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-xl flex-shrink-0"
-                        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-                      >
-                        {c.emoji}
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm" style={{ color: "var(--text)" }}>{c.name}</p>
-                        <p className="text-xs" style={{ color: "var(--dim)" }}>{c.date}</p>
-                      </div>
+        setName("");
+        setMsg("");
+        setEmoji("👋");
+        setSending(false);
+        setDone(true);
+
+        setTimeout(() => setDone(false), 3000);
+    };
+
+    return (
+        <section id="community" className="relative">
+            <div className="orb" style={{ width: 400, height: 400, background: "radial-gradient(circle,rgba(139,92,246,0.09),transparent)", left: "50%", top: "0" }} />
+
+            <div className="section-wrap">
+                <SectionLabel
+                    label="Visitor space"
+                    title="Community"
+                    accent="Wall"
+                    sub="Like this portfolio, drop a comment, or just say hi — your message stays for future visitors."
+                />
+
+                {/* Like block */}
+                <RevealCard className="glass-card p-8 mb-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 className="font-bold text-xl mb-1" style={{ color: "var(--text)" }}>
+                            Enjoyed this portfolio?
+                        </h3>
+                        <p className="text-sm" style={{ color: "var(--muted)" }}>
+                            Show some love with a like 🙏
+                        </p>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>{c.msg}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </RevealCard>
-        </div>
-      </div>
-    </section>
-  );
+
+                    <div className="flex items-center gap-6">
+                        <div className="text-center">
+                            <div className="text-4xl font-black" style={{ color: "var(--accent)" }}>
+                                {likes}
+                            </div>
+                            <div className="text-xs mt-1" style={{ color: "var(--dim)" }}>
+                                likes
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={toggleLike}
+                            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl transition-all duration-300 active:scale-90"
+                            style={{
+                                background: liked
+                                    ? "linear-gradient(135deg,#8b5cf6,#ec4899)"
+                                    : "var(--surface)",
+                                border: `2px solid ${liked ? "transparent" : "var(--border)"}`,
+                                boxShadow: liked
+                                    ? "0 8px 30px rgba(139,92,246,0.45)"
+                                    : "none",
+                                transform: liked ? "scale(1.08)" : "scale(1)",
+                            }}
+                        >
+                            {liked ? "❤️" : "🤍"}
+                        </button>
+                    </div>
+                </RevealCard>
+
+                {/* Comments grid */}
+                <div className="grid md:grid-cols-2 gap-8">
+
+                    {/* Form */}
+                    <RevealCard>
+                        <h3 className="font-bold text-lg mb-5" style={{ color: "var(--text)" }}>
+                            Leave a message
+                        </h3>
+
+                        <form onSubmit={submitComment} className="flex flex-col gap-4">
+                            <input
+                                className="field"
+                                placeholder="Your name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                maxLength={40}
+                            />
+
+                            <textarea
+                                className="field"
+                                placeholder="Your message…"
+                                rows={4}
+                                value={msg}
+                                onChange={(e) => setMsg(e.target.value)}
+                                maxLength={300}
+                                style={{ resize: "none" }}
+                            />
+
+                            <div>
+                                <p className="text-xs mb-2" style={{ color: "var(--dim)" }}>
+                                    Pick an emoji reaction
+                                </p>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {emojis.map((em) => (
+                                        <button
+                                            type="button"
+                                            key={em}
+                                            onClick={() => setEmoji(em)}
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                                            style={{
+                                                background:
+                                                    emoji === em
+                                                        ? "rgba(139,92,246,0.2)"
+                                                        : "var(--surface)",
+                                                border: `1px solid ${
+                                                    emoji === em ? "var(--accent)" : "var(--border)"
+                                                }`,
+                                            }}
+                                        >
+                                            {em}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="btn-glow justify-center"
+                                disabled={sending || !name.trim() || !msg.trim()}
+                            >
+                                {sending ? "Posting…" : done ? "✓ Posted!" : "Post message →"}
+                            </button>
+                        </form>
+                    </RevealCard>
+
+                    {/* Comments list */}
+                    <RevealCard delay={100}>
+                        <h3 className="font-bold text-lg mb-5" style={{ color: "var(--text)" }}>
+                            Messages{" "}
+                            <span className="text-sm font-normal ml-1" style={{ color: "var(--dim)" }}>
+                ({comments.length})
+              </span>
+                        </h3>
+
+                        {comments.length === 0 ? (
+                            <div className="glass-card p-8 text-center" style={{ color: "var(--dim)" }}>
+                                <div className="text-4xl mb-3">💬</div>
+                                <p className="text-sm">Be the first to leave a message!</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3 overflow-y-auto pr-1" style={{ maxHeight: 380 }}>
+                                {comments.map((c) => (
+                                    <div key={c.id} className="glass-card p-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xl">
+                                                {c.emoji}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm" style={{ color: "var(--text)" }}>
+                                                    {c.name}
+                                                </p>
+                                                <p className="text-xs" style={{ color: "var(--dim)" }}>
+                                                    {c.date}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-sm" style={{ color: "var(--muted)" }}>
+                                            {c.msg}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </RevealCard>
+                </div>
+            </div>
+        </section>
+    );
+
 }
 
 /* ─── CONTACT ─────────────────────────────────────────────── */
