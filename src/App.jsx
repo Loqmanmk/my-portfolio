@@ -749,32 +749,43 @@ function Contact() {
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-    const submit = async (e) => {
-        e.preventDefault();
-        if (!form.name || !form.email || !form.message) return;
-        setStatus("loading");
-        try {
-            await emailjs.send(
-                process.env.REACT_APP_EMAILJS_SERVICE_ID,
-                process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
-                {
-                    name:    form.name,
-                    email:   form.email,
-                    company: form.company || "N/A",
-                    subject: form.subject || "General Inquiry",
-                    message: form.message,
-                },
-                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
-            );
-            const subject = form.subject || "General inquiry";
-            const company = form.company ? ` from ${form.company}` : "";
-            const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours.\n\nBest regards,\nLoqman Makouri\n📧 loqmanmakouri66@gmail.com`;
-            setAiReply(reply);
-            setStatus("success");
-        } catch {
-            setStatus("error");
-        }
-    };
+        const submit = async (e) => {
+            e.preventDefault();
+            if (!form.name || !form.email || !form.message) return;
+
+            const lastSubmit = localStorage.getItem("lastSubmitTime");
+            const now = Date.now();
+
+            if (lastSubmit && now - lastSubmit < 30000) {
+                alert("Please wait 30 seconds before sending again.");
+                return;
+            }
+
+            localStorage.setItem("lastSubmitTime", now);
+
+            setStatus("loading");
+            try {
+                await emailjs.send(
+                    process.env.REACT_APP_EMAILJS_SERVICE_ID,
+                    process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+                    {
+                        name:    form.name,
+                        email:   form.email,
+                        company: form.company || "N/A",
+                        subject: form.subject || "General Inquiry",
+                        message: form.message,
+                    },
+                    process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+                );
+                const subject = form.subject || "General inquiry";
+                const company = form.company ? ` from ${form.company}` : "";
+                const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours.\n\nBest regards,\nLoqman Makouri\n📧 loqmanmakouri66@gmail.com`;
+                setAiReply(reply);
+                setStatus("success");
+            } catch {
+                setStatus("error");
+            }
+        };
 
   const contactItems = [
     { icon: "✉", label: "Email",    val: INFO.email,    href: `mailto:${INFO.email}` },
