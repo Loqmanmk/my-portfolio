@@ -37,12 +37,20 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
+    #font-family: 'Playfair Display', serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
   ::selection { background: rgba(139,92,246,0.35); }
 }
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: -0.5px;
+}
 
+.font-display {
+  font-family: "Playfair Display", serif;
+}
 @layer components {
   /* Glass morphism cards */
   .glass-card {

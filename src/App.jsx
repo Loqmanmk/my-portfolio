@@ -871,8 +871,8 @@ function Contact() {
         setStatus("loading");
         try {
             await emailjs.send(
-                process.env.REACT_APP_EMAILJS_SERVICE_ID,
-                process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
                 {
                     name:    form.name,
                     email:   form.email,
@@ -880,7 +880,7 @@ function Contact() {
                     subject: form.subject || "General Inquiry",
                     message: form.message,
                 },
-                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
             );
             const subject = form.subject || "General inquiry";
             const company = form.company ? ` from ${form.company}` : "";
