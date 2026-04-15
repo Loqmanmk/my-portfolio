@@ -835,49 +835,62 @@ function Community() {
 
 /* ─── CONTACT ─────────────────────────────────────────────── */
 function Contact() {
-  const [form, setForm] = useState({ name: "", company: "", email: "", subject: "", message: "" });
-  const [status, setStatus] = useState("idle");
-  const [aiReply, setAiReply] = useState("");
+    const [form, setForm] = useState({ name: "", company: "", email: "", subject: "", message: "" });
+    const [status, setStatus] = useState("idle");
+    const [aiReply, setAiReply] = useState("");
+    const [cooldown, setCooldown] = useState(0);
 
-  const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+    useEffect(() => {
+        const lastSubmit = localStorage.getItem("lastSubmitTime");
+        if (lastSubmit) {
+            const remaining = Math.ceil((30000 - (Date.now() - parseInt(lastSubmit))) / 1000);
+            if (remaining > 0) setCooldown(remaining);
+        }
+    }, []);
 
-        const submit = async (e) => {
-            e.preventDefault();
-            if (!form.name || !form.email || !form.message) return;
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const timer = setInterval(() => {
+            setCooldown((c) => {
+                if (c <= 1) { clearInterval(timer); return 0; }
+                return c - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [cooldown]);
 
-            const lastSubmit = localStorage.getItem("lastSubmitTime");
-            const now = Date.now();
+    const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-            if (lastSubmit && now - lastSubmit < 30000) {
-                alert("Please wait 30 seconds before sending again.");
-                return;
-            }
+    const submit = async (e) => {
+        e.preventDefault();
+        if (!form.name || !form.email || !form.message) return;
+        if (cooldown > 0) return;
 
-            localStorage.setItem("lastSubmitTime", now);
-
-            setStatus("loading");
-            try {
-                await emailjs.send(
-                    process.env.REACT_APP_EMAILJS_SERVICE_ID,
-                    process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
-                    {
-                        name:    form.name,
-                        email:   form.email,
-                        company: form.company || "N/A",
-                        subject: form.subject || "General Inquiry",
-                        message: form.message,
-                    },
-                    process.env.REACT_APP_EMAILJS_PUBLIC_KEY
-                );
-                const subject = form.subject || "General inquiry";
-                const company = form.company ? ` from ${form.company}` : "";
-                const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours.\n\nBest regards,\nLoqman Makouri\n📧 loqmanmakouri66@gmail.com`;
-                setAiReply(reply);
-                setStatus("success");
-            } catch {
-                setStatus("error");
-            }
-        };
+        localStorage.setItem("lastSubmitTime", Date.now());
+        setCooldown(30);
+        setStatus("loading");
+        try {
+            await emailjs.send(
+                process.env.REACT_APP_EMAILJS_SERVICE_ID,
+                process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+                {
+                    name:    form.name,
+                    email:   form.email,
+                    company: form.company || "N/A",
+                    subject: form.subject || "General Inquiry",
+                    message: form.message,
+                },
+                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+            );
+            const subject = form.subject || "General inquiry";
+            const company = form.company ? ` from ${form.company}` : "";
+            const reply = `Dear ${form.name},\n\nThank you${company} for reaching out through my portfolio! I've received your message regarding "${subject}" and truly appreciate you taking the time to write.\n\nI'll review your message carefully and get back to you as soon as possible — usually within 24 to 48 hours.\n\nBest regards,\nLoqman Makouri\n📧 loqmanmakouri66@gmail.com`;
+            setAiReply(reply);
+            setStatus("success");
+        } catch {
+            setStatus("error");
+        }
+    };
 
   const contactItems = [
     { icon: "✉", label: "Email",    val: INFO.email,    href: `mailto:${INFO.email}` },
@@ -989,11 +1002,56 @@ function Contact() {
                   {status === "error" && (
                     <p className="text-xs" style={{ color: "#f87171" }}>Something went wrong. Please email directly at {INFO.email}</p>
                   )}
-                  <button type="submit" className="btn-glow justify-center" disabled={status === "loading"}>
-                    {status === "loading"
-                      ? <span className="flex items-center gap-2"><span style={{ animation: "spin .8s linear infinite", display: "inline-block" }}>⟳</span> Sending…</span>
-                      : "Send Message →"}
-                  </button>
+                    <button
+                        type="submit"
+                        className="btn-glow justify-center"
+                        disabled={status === "loading" || cooldown > 0}
+                        style={{ opacity: cooldown > 0 ? 0.7 : 1 }}
+                        >
+                        {status === "loading" ? <span className="flex items-center gap-2">
+                        <span style={{ animation: "spin .8s linear infinite", display: "inline-block" }}>⟳</span> Sending…
+                        </span>
+                            : cooldown > 0 ? <span className="flex items-center gap-2">
+                            <span>⏳</span> Wait {cooldown}s before sending again
+                            </span>
+                                : "Send Message →"}
+                            </button>
+
+                    {cooldown > 0 && (
+                        <div
+                            className="flex items-center gap-3 p-4 rounded-xl text-sm"
+                            style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)" }}
+                        >
+                            <div style={{ flexShrink: 0 }}>
+                                <div
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-base"
+                                    style={{ background: "rgba(139,92,246,0.15)" }}
+                                >
+                                    ⏱
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-semibold text-xs mb-1" style={{ color: "var(--accent)" }}>
+                                    Message sent successfully!
+                                </p>
+                                <p className="text-xs" style={{ color: "var(--muted)" }}>
+                                    You can send another message in {cooldown} seconds
+                                </p>
+                                <div
+                                    className="mt-2 h-1 rounded-full overflow-hidden"
+                                    style={{ background: "var(--border)" }}
+                                >
+                                    <div
+                                        className="h-full rounded-full transition-all duration-1000"
+                                        style={{
+                                            width: `${(cooldown / 30) * 100}%`,
+                                            background: "linear-gradient(90deg, var(--accent), var(--accent2))",
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                   <p className="text-xs text-center" style={{ color: "var(--dim)" }}>
                     ✨ You'll receive a personalized confirmation instantly
                   </p>
