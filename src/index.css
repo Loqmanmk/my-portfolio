@@ -37,7 +37,6 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
-    #font-family: 'Playfair Display', serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
