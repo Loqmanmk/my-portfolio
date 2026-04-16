@@ -178,7 +178,7 @@ function Hero() {
   useEffect(() => { const t = setTimeout(() => setLoaded(true), 120); return () => clearTimeout(t); }, []);
 
   return (
-    <section id="about" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section id="about" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 w-full max-w-full">
       {/* Ambient orbs */}
       <div className="orb" style={{ width: 700, height: 700, background: "radial-gradient(circle,rgba(139,92,246,0.18),transparent)", top: "-15%", left: "-15%" }} />
       <div className="orb" style={{ width: 500, height: 500, background: "radial-gradient(circle,rgba(34,211,238,0.12),transparent)", bottom: "0", right: "-5%", animation: "float 8s ease-in-out infinite" }} />
@@ -194,13 +194,13 @@ function Hero() {
         }}
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-24 flex flex-col md:flex-row items-center gap-16 md:gap-20">
+          <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10 md:gap-20 w-full">
 
         {/* ── Photo ── */}
         <div
-          className="flex-shrink-0"
+            className="flex-shrink-0 flex justify-center w-full md:w-auto"
           style={{
-              marginLeft: "60px",
+              marginLeft: "0px",
               opacity: loaded ? 1 : 0,
             transform: loaded ? "none" : "translateY(20px)",
             transition: "opacity 1s ease, transform 1s ease",

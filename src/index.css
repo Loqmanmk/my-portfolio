@@ -174,7 +174,8 @@ h1, h2, h3 {
 
   /* Section wrapper */
   .section-wrap { max-width:1100px; margin:0 auto; padding:100px 32px; }
-  @media(max-width:640px) { .section-wrap { padding:72px 20px; } }
+  @media(max-width:768px) { .section-wrap { padding:48px 16px; } }
+  @media(max-width:640px) { .section-wrap { padding:36px 16px; } }
 
   /* Shimmer loading */
   .shimmer-bg {
@@ -227,5 +228,18 @@ h1, h2, h3 {
     transform:translate(-50%,-50%);
     z-index:9999;
     transition:opacity .3s;
+  }
+}
+
+@media(max-width:768px) {
+  /* Fix horizontal overflow */
+  section {
+    overflow-x: hidden;
+  }
+
+  /* Fix hero layout on mobile */
+  #about .relative.z-10 {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
