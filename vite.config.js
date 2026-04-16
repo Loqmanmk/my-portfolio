@@ -6,10 +6,16 @@ export default defineConfig({
     build: {
         rolldownOptions: {
             output: {
-                manualChunks: {
-                    'react-vendor': ['react', 'react-dom'],
-                    'firebase-vendor': ['firebase/app', 'firebase/firestore', 'firebase/analytics'],
-                    'emailjs-vendor': ['@emailjs/browser'],
+                manualChunks: (id) => {
+                    if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                        return 'react-vendor'
+                    }
+                    if (id.includes('node_modules/firebase')) {
+                        return 'firebase-vendor'
+                    }
+                    if (id.includes('node_modules/@emailjs')) {
+                        return 'emailjs-vendor'
+                    }
                 }
             }
         },
