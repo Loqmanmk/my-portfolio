@@ -194,7 +194,7 @@ function Hero() {
         }}
       />
 
-          <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10 md:gap-20 w-full">
+          <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-6 py-16 flex flex-col md:flex-row items-center gap-10 md:gap-20 w-full" style={{ paddingLeft: "3rem" , paddingTop:"0rem"}}>
 
         {/* ── Photo ── */}
         <div
