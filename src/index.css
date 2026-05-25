@@ -200,6 +200,38 @@ h1, h2, h3 {
   .field:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(139,92,246,0.15); }
   .field::placeholder { color:var(--dim); }
 
+  .language-select-wrap {
+    display:inline-flex;
+    align-items:center;
+  }
+  .language-select {
+    min-width:104px;
+    height:36px;
+    padding:0 30px 0 12px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--muted);
+    font-size:12px;
+    font-weight:700;
+    outline:none;
+    cursor:pointer;
+  }
+  .language-select:focus {
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(139,92,246,0.15);
+  }
+
+  html[dir="rtl"] body {
+    direction:rtl;
+  }
+  html[dir="rtl"] .md\:text-left {
+    text-align:right;
+  }
+  html[dir="rtl"] .md\:justify-start {
+    justify-content:flex-end;
+  }
+
   /* Timeline line */
   .timeline-line {
     position:absolute;
